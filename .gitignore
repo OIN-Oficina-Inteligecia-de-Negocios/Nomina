@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.ssh
+.tunnel.pid
+*.log
+.DS_Store
+.idea/
+.vscode/
+coverage/
+postgres-data/

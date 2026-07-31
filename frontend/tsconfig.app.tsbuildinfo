@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/decisiondialog.tsx","./src/components/layout.tsx","./src/components/statusbadge.tsx","./src/context/authcontext.tsx","./src/lib/api.ts","./src/pages/dashboardpage.tsx","./src/pages/incapacitypage.tsx","./src/pages/loginpage.tsx","./src/types/index.ts"],"version":"5.9.3"}
