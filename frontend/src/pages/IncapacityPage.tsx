@@ -15,6 +15,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { DecisionDialog } from '../components/DecisionDialog';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
+import { useAuth } from '../context/AuthContext';
 import { api, apiBlob } from '../lib/api';
 import type { HistoryEntry, Incapacity } from '../types';
 
@@ -43,6 +44,8 @@ const date = (value?: string | null) => {
 export function IncapacityPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [item, setItem] = useState<Incapacity | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [dialog, setDialog] = useState<'approve' | 'deny' | null>(null);
@@ -86,31 +89,11 @@ export function IncapacityPage() {
     }
   }
 
-  async function openDocument() {
-    const previewWindow = window.open('', '_blank');
-    if (previewWindow) previewWindow.opener = null;
-    setDocumentBusy(true);
-    setError('');
-    try {
-      const blob = await apiBlob(`/incapacidades/${id}/document`);
-      const blobUrl = URL.createObjectURL(blob);
-      if (previewWindow) {
-        previewWindow.location.href = blobUrl;
-      } else {
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.target = '_blank';
-        link.rel = 'noreferrer';
-        link.click();
-      }
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    } catch (caught) {
-      previewWindow?.close();
-      setError(caught instanceof Error ? caught.message : 'No fue posible abrir el PDF');
-    } finally {
-      setDocumentBusy(false);
-    }
-  }
+  const openDocument = () => {
+    const token = sessionStorage.getItem('lia_token');
+    const url = `/api/incapacidades/${id}/document${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
   const data = item?.datos ?? {};
   const fields = [
     { label: 'Colaborador', value: item?.nombre_completo, icon: UserRound },
@@ -140,7 +123,7 @@ export function IncapacityPage() {
               </div>
               <p className="muted">{item.tipo}</p>
             </div>
-            {item.estado_tramite === 'PENDIENTE_REVISION' && (
+            {isAdmin && item.estado_tramite === 'PENDIENTE_REVISION' && (
               <div className="decision-actions">
                 <button className="button button--danger-outline" onClick={() => setDialog('deny')}>
                   <X size={18} /> Denegar
@@ -155,7 +138,7 @@ export function IncapacityPage() {
           <div className="detail-grid">
             <section className="workspace-card detail-card">
               <div className="section-title">
-                <div><p className="eyebrow">Información</p><h2>Datos del solicitante</h2></div>
+                <div><p className="eyebrow"><span className="eyebrow-dot" /> Información</p><h2>Datos del solicitante</h2></div>
               </div>
               <dl className="info-grid">
                 {fields.map(({ label, value, icon: Icon }) => (
@@ -169,18 +152,19 @@ export function IncapacityPage() {
 
             <aside className="workspace-card document-card">
               <span className="document-card__icon"><FileText size={27} /></span>
-              <div>
-                <p className="eyebrow">Documento consolidado</p>
-                <h2>{item.nombre_archivo || `Incapacidad-${item.id}.pdf`}</h2>
+              <div style={{ minWidth: 0, width: '100%' }}>
+                <p className="eyebrow"><span className="eyebrow-dot" /> Documento consolidado</p>
+                <h2 title={item.nombre_archivo || `Incapacidad-${item.id}.pdf`}>
+                  {item.nombre_archivo || `Incapacidad-${item.id}.pdf`}
+                </h2>
                 <p className="muted">Abre el PDF para verificar los soportes antes de decidir.</p>
               </div>
               {item.url_documento ? (
                 <button
                   className="button button--secondary button--full"
-                  disabled={documentBusy}
-                  onClick={() => void openDocument()}
+                  onClick={openDocument}
                 >
-                  {documentBusy ? 'Abriendo PDF…' : 'Abrir PDF'} <ExternalLink size={17} />
+                  Abrir PDF <ExternalLink size={17} />
                 </button>
               ) : (
                 <div className="alert alert--warning">Este radicado no tiene una URL de documento.</div>
@@ -188,7 +172,7 @@ export function IncapacityPage() {
             </aside>
 
             <section className="workspace-card detail-card">
-              <div className="section-title"><div><p className="eyebrow">Solicitud</p><h2>Datos de la incapacidad</h2></div></div>
+              <div className="section-title"><div><p className="eyebrow"><span className="eyebrow-dot" /> Solicitud</p><h2>Datos de la incapacidad</h2></div></div>
               <dl className="info-grid">
                 <div><dt>Fecha de inicio</dt><dd>{date(String(data.fecha_inicio ?? ''))}</dd></div>
                 <div><dt>Fecha de finalización</dt><dd>{date(String(data.fecha_fin ?? ''))}</dd></div>

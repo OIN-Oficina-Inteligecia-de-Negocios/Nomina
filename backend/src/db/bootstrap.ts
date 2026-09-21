@@ -4,13 +4,25 @@ import { pool } from './pool.js';
 
 export async function ensureAdminUser() {
   const passwordHash = await bcrypt.hash(env.ADMIN_PASSWORD, 12);
-  await pool.query(
-    `INSERT INTO app_users (email, password_hash, display_name, role)
-     VALUES ($1, $2, $3, 'ADMIN')
-     ON CONFLICT (email) DO UPDATE
-       SET password_hash = EXCLUDED.password_hash,
-           active = TRUE,
-           updated_at = NOW()`,
-    [env.ADMIN_EMAIL.toLowerCase(), passwordHash, 'Administrador LIA'],
+  const adminEmail = env.ADMIN_EMAIL.toLowerCase();
+
+  const existing = await pool.query(
+    `SELECT id FROM Usuarios_Nomina WHERE LOWER(email) = $1`,
+    [adminEmail],
   );
+
+  if (existing.rows.length > 0) {
+    await pool.query(
+      `UPDATE Usuarios_Nomina
+       SET password_hash = $1, active = TRUE, updated_at = NOW()
+       WHERE LOWER(email) = $2`,
+      [passwordHash, adminEmail],
+    );
+  } else {
+    await pool.query(
+      `INSERT INTO Usuarios_Nomina (email, password_hash, display_name, role, must_change_password, zona_asignada)
+       VALUES ($1, $2, $3, 'ADMIN', TRUE, NULL)`,
+      [adminEmail, passwordHash, 'Administrador LIA'],
+    );
+  }
 }

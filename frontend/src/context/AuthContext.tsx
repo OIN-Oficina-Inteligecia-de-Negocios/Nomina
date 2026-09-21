@@ -11,6 +11,7 @@ import type { User } from '../types';
 type AuthValue = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -31,10 +32,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthValue>(
     () => ({
       user,
-      login: async (email, password) => {
+      login: async (email: string, password: string) => {
         const result = await api<{ token: string; user: User }>('/auth/login', {
           method: 'POST',
           body: JSON.stringify({ email, password }),
+        });
+        sessionStorage.setItem('lia_token', result.token);
+        sessionStorage.setItem('lia_user', JSON.stringify(result.user));
+        setUser(result.user);
+      },
+      changePassword: async (newPassword: string) => {
+        const result = await api<{ token: string; user: User }>('/auth/change-password', {
+          method: 'POST',
+          body: JSON.stringify({ newPassword }),
         });
         sessionStorage.setItem('lia_token', result.token);
         sessionStorage.setItem('lia_user', JSON.stringify(result.user));

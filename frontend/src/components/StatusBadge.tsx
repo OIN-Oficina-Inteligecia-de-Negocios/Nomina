@@ -7,10 +7,17 @@ const labels: Record<Status, string> = {
 };
 
 export function StatusBadge({ status }: { status: Status }) {
+  const mod =
+    status === 'APROBADA'
+      ? 'approved'
+      : status === 'DENEGADA'
+        ? 'denied'
+        : 'pending';
+
   return (
-    <span className={`status status--${status.toLowerCase()}`}>
-      <span aria-hidden="true" />
-      {labels[status]}
+    <span className={`status-badge status-badge--${mod}`}>
+      <span className="status-badge__dot" aria-hidden="true" />
+      {labels[status] ?? status}
     </span>
   );
 }

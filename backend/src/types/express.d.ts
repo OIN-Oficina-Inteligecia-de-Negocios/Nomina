@@ -6,6 +6,8 @@ declare global {
         email: string;
         displayName: string;
         role: string;
+        mustChangePassword?: boolean;
+        zonaAsignada?: string;
       };
     }
   }

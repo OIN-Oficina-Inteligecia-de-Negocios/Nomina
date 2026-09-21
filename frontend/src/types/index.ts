@@ -1,10 +1,26 @@
 export type Status = 'PENDIENTE_REVISION' | 'APROBADA' | 'DENEGADA';
 
+export type UserRole = 'ADMIN' | 'REVIEWER' | 'GESTION';
+
 export type User = {
   id: number;
   email: string;
   displayName: string;
-  role: string;
+  role: UserRole;
+  zonaAsignada?: string | null;
+  mustChangePassword?: boolean;
+};
+
+export type AdminUser = {
+  id: number;
+  email: string;
+  display_name: string;
+  role: UserRole;
+  zona_asignada: string | null;
+  active: boolean;
+  must_change_password: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Incapacity = {

@@ -2,9 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-const projectDirectory = path.resolve(scriptDirectory, '..', '..');
-const workflowPath = path.join(projectDirectory, 'LIA.json');
+const workflowPath = '/home/juan.monroy/Incapacidades.json';
 const panelBaseUrl = String(process.argv[2] || 'http://localhost:5173')
   .trim()
   .replace(/\/+$/, '');
@@ -15,7 +13,12 @@ if (!/^https?:\/\/[^/]+/i.test(panelBaseUrl)) {
   );
 }
 
+if (!fs.existsSync(workflowPath)) {
+  throw new Error(`No se encontró el archivo del flujo en: ${workflowPath}`);
+}
+
 const workflow = JSON.parse(fs.readFileSync(workflowPath, 'utf8'));
+
 const requiredNodes = [
   'Configurar revisión por correo',
   'Guardar token y estado de revisión',
@@ -196,10 +199,7 @@ if (invalidConnections.length) {
 }
 
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const backupPath = path.join(
-  projectDirectory,
-  `LIA.backup-antes-integrar-panel-${timestamp}.json`,
-);
+const backupPath = `/home/juan.monroy/Incapacidades.backup-antes-integrar-panel-${timestamp}.json`;
 fs.copyFileSync(workflowPath, backupPath);
 fs.writeFileSync(workflowPath, `${JSON.stringify(workflow, null, 2)}\n`, 'utf8');
 

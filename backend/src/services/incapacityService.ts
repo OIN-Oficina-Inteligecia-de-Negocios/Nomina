@@ -35,8 +35,9 @@ export async function decideIncapacity(input: {
   observation?: string;
   reviewerEmail: string;
 }) {
-  const client = await pool.connect();
+  let client: PoolClient | undefined;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
     const locked = await client.query(
       'SELECT estado_tramite FROM incapacidades WHERE id = $1 FOR UPDATE',
@@ -85,9 +86,17 @@ export async function decideIncapacity(input: {
     await client.query('COMMIT');
     return updated;
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Error durante ROLLBACK de transacción:', rollbackError);
+      }
+    }
     throw error;
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 }
